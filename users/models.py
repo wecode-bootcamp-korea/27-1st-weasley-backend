@@ -10,7 +10,7 @@ class User(TimeStampModel):
     date_of_birth = models.DateField()
     password      = models.CharField(max_length=200)
     gender        = models.CharField(max_length=6)
-    point         = models.PositiveIntegerField()
+    point         = models.PositiveIntegerField(default=50000)
 
 
     class Meta:
