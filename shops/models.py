@@ -27,6 +27,7 @@ class Order(TimeStampModel):
 class Subscribe(TimeStampModel):
     user               = models.ForeignKey('users.User', on_delete=models.CASCADE)
     product            = models.ForeignKey('products.Product', on_delete=models.CASCADE)
+    address            = models.ForeignKey('users.Address', on_delete=models.CASCADE)
     amount             = models.PositiveSmallIntegerField()
     interval           = models.PositiveSmallIntegerField()
     next_purchase_date = models.DateField()
