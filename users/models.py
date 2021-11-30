@@ -5,12 +5,12 @@ from core.models import TimeStampModel
 
 class User(TimeStampModel):
     name          = models.CharField(max_length=15)
-    phone         = models.CharField(max_length=11, unique=True)
+    phone         = models.CharField(max_length=20, unique=True)
     email         = models.CharField(max_length=500, unique=True)
     date_of_birth = models.DateField()
     password      = models.CharField(max_length=200)
     gender        = models.CharField(max_length=6)
-    point         = models.PositiveIntegerField(default=50000)
+    point         = models.DecimalField(max_digits=10, decimal_places=2, default=50000)
 
 
     class Meta:

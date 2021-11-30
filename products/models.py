@@ -5,8 +5,8 @@ from core.models import TimeStampModel
 
 class Category(models.Model):
     name      = models.CharField(max_length=10)
-    ml_volume = models.PositiveIntegerField()
-    price     = models.PositiveIntegerField()
+    ml_volume = models.DecimalField(max_digits=10, decimal_places=2)
+    price     = models.DecimalField(max_digits=10, decimal_places=2)
 
 
     class Meta:
@@ -18,9 +18,9 @@ class Category(models.Model):
 
 
 class Product(models.Model):
-    category   = models.ForeignKey('Category', on_delete=models.CASCADE)
-    outer_name = models.CharField(max_length=50)
-    inner_name = models.CharField(max_length=50)
+    category = models.ForeignKey('Category', on_delete=models.CASCADE)
+    name     = models.CharField(max_length=50)
+    tag      = models.ForeignKey('Tag', on_delete=models.CASCADE)
 
 
     class Meta:
@@ -28,7 +28,7 @@ class Product(models.Model):
 
 
     def __str__(self):
-        return self.inner_name
+        return self.name
 
 
 class Review(TimeStampModel):
@@ -48,11 +48,11 @@ class Review(TimeStampModel):
 
 class Price(models.Model):
     product             = models.ForeignKey('Product', on_delete=models.CASCADE)
-    manufacturing_cost  = models.PositiveIntegerField()
-    transportation_cost = models.PositiveIntegerField()
-    development_cost    = models.PositiveIntegerField()
-    commision_cost      = models.PositiveIntegerField()
-    other_market_price  = models.PositiveIntegerField()
+    manufacturing_cost  = models.DecimalField(max_digits=10, decimal_places=2)
+    transportation_cost = models.DecimalField(max_digits=10, decimal_places=2)
+    development_cost    = models.DecimalField(max_digits=10, decimal_places=2)
+    commision_cost      = models.DecimalField(max_digits=10, decimal_places=2)
+    other_market_price  = models.DecimalField(max_digits=10, decimal_places=2)
 
 
     class Meta:
@@ -67,6 +67,18 @@ class Image(models.Model):
 
     class Meta:
         db_table = 'images'
+
+
+    def __str__(self):
+        return self.name
+
+
+class Tag(models.Model):
+    name = models.CharField(max_length=10)
+
+
+    class Meta:
+        db_table = 'tags'
 
 
     def __str__(self):
