@@ -88,7 +88,7 @@ class SigninView(View):
                 for cart_item in cart_list
             ]
 
-            return JsonResponse({'MESSAGE': 'SUCCESS', 'TOKEN': token, 'RESULT': result}, status=200)
+            return JsonResponse({'MESSAGE': 'SUCCESS', 'TOKEN': token, 'RESULT': results}, status=200)
 
         except json.decoder.JSONDecodeError:
             return JsonResponse({'MESSAGE': 'BODY_REQUIRED'}, status=400)
