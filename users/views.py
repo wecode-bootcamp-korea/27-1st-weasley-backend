@@ -12,6 +12,13 @@ class SignupView(View):
         try:
             data = json.loads(request.body)
 
+            name          = data['name']
+            phone         = data['phone']
+            email         = data['email']
+            date_of_birth = data['date_of_birth']
+            password      = data['password']
+            gender        = data['gender']
+
             V = UserValidator()
             V.validate_name(name)
             V.validate_phone(phone)
@@ -20,19 +27,21 @@ class SignupView(View):
             V.validate_password(password)
             V.validate_gender(gender)
 
-            if User.objects.filter(email = data['email']).exists():
-                return JsonResponse({'MESSAGE' : 'EMAIL_ALREADY_EXIST'}, status = 400)
-
             hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
+            if User.objects.filter(email=email).exists():
+                return JsonResponse({'MESSAGE' : 'EMAIL_ALREADY_EXIST'}, status = 400)
+
+            if User.objects.filter(phone=phone).exists():
+                return JsonResponse({'MESSAGE' : 'PHONE_ALREADY_EXIST'}, status = 400)
+
             User.objects.create(
-                name          = data['name'],
-                phone         = data['phone'],
-                email         = data['email'],
-                date_of_birth = data['date_of_birth'],
+                name          = name,
+                phone         = phone,
+                email         = email,
+                date_of_birth = date_of_birth,
                 password      = hashed_password,
-                gender        = data['gender'],
-                point         = data['point']
+                gender        = gender,
             )
 
             return JsonResponse({'MESSAGE' : 'CREATED'}, status = 201)
