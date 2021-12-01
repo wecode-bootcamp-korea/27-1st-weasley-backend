@@ -40,7 +40,10 @@ class UserCheckView(View):
             return JsonResponse({'MESSAGE': e.message}, status=400)
 
         except User.DoesNotExist:
-            return JsonResponse({'MESSAGE': 'USER_NOT_FOUND'}, status=400)
+            result = {
+                'email': email
+            }
+            return JsonResponse({'MESSAGE': 'USER_NOT_FOUND', 'RESULT': result}, status=400)
 
 
 class SigninView(View):
