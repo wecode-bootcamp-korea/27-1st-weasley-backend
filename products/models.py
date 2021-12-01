@@ -20,7 +20,7 @@ class Category(models.Model):
 class Product(models.Model):
     category = models.ForeignKey('Category', on_delete=models.CASCADE)
     name     = models.CharField(max_length=50)
-    tag      = models.ForeignKey('Tag', on_delete=models.CASCADE)
+    tags     = models.ManyToManyField('Tag', related_name='products')
 
 
     class Meta:
