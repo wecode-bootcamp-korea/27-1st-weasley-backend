@@ -9,6 +9,55 @@ from users.models     import User
 from users.validators import UserValidator
 from my_settings      import SECRET_KEY, ALGORITHM
 
+class SignupView(View):
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+
+            name          = data['name']
+            phone         = data['phone']
+            email         = data['email']
+            date_of_birth = data['date_of_birth']
+            password      = data['password']
+            gender        = data['gender']
+
+            user_validator = UserValidator()
+            user_validator.validate_name(name)
+            user_validator.validate_phone(phone)
+            user_validator.validate_email(email)
+            user_validator.validate_date_of_birth(date_of_birth)
+            user_validator.validate_password(password)
+            user_validator.validate_gender(gender)
+
+            hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+            if User.objects.filter(email=email).exists():
+                return JsonResponse({'MESSAGE' : 'EMAIL_ALREADY_EXIST'}, status = 400)
+
+            if User.objects.filter(phone=phone).exists():
+                return JsonResponse({'MESSAGE' : 'PHONE_ALREADY_EXIST'}, status = 400)
+
+            user = User.objects.create(
+                name          = name,
+                phone         = phone,
+                email         = email,
+                date_of_birth = date_of_birth,
+                password      = hashed_password,
+                gender        = gender
+            )
+
+            access_token = jwt.encode({'id' = user.id}, SECRET_KEY, ALGORITHM)
+
+            return JsonResponse({'MESSAGE' : 'CREATED', 'TOKEN' : access_token}, status = 201)
+
+        except KeyError:
+            return JsonResponse({'MESSAGE' : 'KEY_ERROR'}, status = 400)
+
+        except ValidationError as e:
+            return JsonResponse({'MESSAGE' : e.message}, status = 400)
+
+        except json.decoder.JSONDecodeError:
+            return JsonResponse({'MESSAGE': 'BODY_REQUIRED'}, status=400)
 
 class UserCheckView(View):
     def post(self, request):
@@ -33,7 +82,7 @@ class UserCheckView(View):
 
         except KeyError:
             return JsonResponse({'MESSAGE': 'KEY_ERROR'}, status=400)
-          
+
         except ValidationError as e:
             return JsonResponse({'MESSAGE': e.message}, status=400)
 
@@ -41,7 +90,7 @@ class UserCheckView(View):
             result = {'email': email}
             return JsonResponse({'MESSAGE': 'USER_NOT_FOUND', 'RESULT': result}, status=400)
 
-          
+
 class SigninView(View):
     def post(self, request):
         try:
