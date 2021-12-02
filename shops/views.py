@@ -7,7 +7,7 @@ from shops.models import Cart
 from core.utils   import authorization
 
 
-class AllCartView(View):
+class CartView(View):
     @authorization
     def get(self, request):
         user = request.user
