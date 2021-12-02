@@ -21,13 +21,13 @@ class SignupView(View):
             password      = data['password']
             gender        = data['gender']
 
-            V = UserValidator()
-            V.validate_name(name)
-            V.validate_phone(phone)
-            V.validate_email(email)
-            V.validate_date_of_birth(date_of_birth)
-            V.validate_password(password)
-            V.validate_gender(gender)
+            user_validator = UserValidator()
+            user_validator.validate_name(name)
+            user_validator.validate_phone(phone)
+            user_validator.validate_email(email)
+            user_validator.validate_date_of_birth(date_of_birth)
+            user_validator.validate_password(password)
+            user_validator.validate_gender(gender)
 
             hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
@@ -46,12 +46,10 @@ class SignupView(View):
                 gender        = gender
             )
 
-            info = {'id' : user.id}
-            
-            access_token = jwt.encode(info, SECRET_KEY, ALGORITHM)
+            access_token = jwt.encode({'id' = user.id}, SECRET_KEY, ALGORITHM)
 
             return JsonResponse({'MESSAGE' : 'CREATED', 'TOKEN' : access_token}, status = 201)
-   
+
         except KeyError:
             return JsonResponse({'MESSAGE' : 'KEY_ERROR'}, status = 400)
 
@@ -60,7 +58,7 @@ class SignupView(View):
 
         except json.decoder.JSONDecodeError:
             return JsonResponse({'MESSAGE': 'BODY_REQUIRED'}, status=400)
-          
+
 class UserCheckView(View):
     def post(self, request):
         try:
@@ -84,7 +82,7 @@ class UserCheckView(View):
 
         except KeyError:
             return JsonResponse({'MESSAGE': 'KEY_ERROR'}, status=400)
-          
+
         except ValidationError as e:
             return JsonResponse({'MESSAGE': e.message}, status=400)
 
@@ -92,7 +90,7 @@ class UserCheckView(View):
             result = {'email': email}
             return JsonResponse({'MESSAGE': 'USER_NOT_FOUND', 'RESULT': result}, status=400)
 
-          
+
 class SigninView(View):
     def post(self, request):
         try:
