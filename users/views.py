@@ -46,7 +46,7 @@ class SignupView(View):
                 gender        = gender
             )
 
-            access_token = jwt.encode({'id' = user.id}, SECRET_KEY, ALGORITHM)
+            access_token = jwt.encode({'id' : user.id}, SECRET_KEY, ALGORITHM)
 
             return JsonResponse({'MESSAGE' : 'CREATED', 'TOKEN' : access_token}, status = 201)
 
