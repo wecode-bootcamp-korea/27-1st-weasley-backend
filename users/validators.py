@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 
 class UserValidator:
     NAME_REGEX     = '^[가-힣]{1,15}$'
-    PHONE_REGEX    = '^01([0|1|6|7|8|9])([0-9](3,4))([0-9]{4})$'
+    PHONE_REGEX    = '^01([016789])([0-9]{3,4})([0-9]{4})$'
     PASSWORD_REGEX = '''^.*(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!"#$%&'()*+,\-./:;<=>?@[＼\]^_`{|}~\\)])[\w!"#$%&'()*+,\-./:;<=>?@[＼\]^`{|}~\\)]{8,45}$'''
 
     NAME_MIN_LENGTH         = 1
