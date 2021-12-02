@@ -44,3 +44,23 @@ class CartView(View):
         ]
 
         return JsonResponse({'MESSAGE': 'SUCCESS', 'RESULT': results}, status=200)
+
+    @authorization
+    def delete(self, request):
+        try:
+            product_id = request.GET['product_id']
+            user       = request.user
+
+            cart_item  = Cart.objects.get(user=user, product_id=product_id)
+            cart_item.delete()
+
+            return JsonResponse({'MESSAGE': 'DELETED'}, status=200)
+
+        except KeyError:
+            return JsonResponse({'MESSAGE': 'PARAM_REQUIRED'}, status=400)
+
+        except Cart.DoesNotExist:
+            return JsonResponse({'MESSAGE': 'INVALID_PRODUCT'}, status=400)
+
+        except ValueError:
+            return JsonResponse({'MESSAGE': 'INVALID_PRODUCT'}, status=400)
