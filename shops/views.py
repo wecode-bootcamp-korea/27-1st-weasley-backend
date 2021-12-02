@@ -74,5 +74,8 @@ class CartView(View):
         except Cart.DoesNotExist:
             return JsonResponse({'MESSAGE': 'INVALID_PRODUCT'}, status=400)
 
+        except ValueError:
+            return JsonResponse({'MESSAGE': 'INVALID_PRODUCT'}, status=400)
+        
         except ValidationError as e:
             return JsonResponse({'MESSAGE': e.message}, status=400)
