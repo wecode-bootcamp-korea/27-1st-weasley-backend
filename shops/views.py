@@ -6,7 +6,7 @@ from django.db.models       import Prefetch
 from django.core.exceptions import ValidationError
 
 from shops.models           import Cart
-from products.models        import Image
+from products.models        import Image, Product
 from core.utils             import authorization
 from shops.validators       import ShopValidator
 
@@ -60,11 +60,16 @@ class CartView(View):
             shop_validator = ShopValidator()
             shop_validator.validate_amount(amount)
 
-            if not Cart.objects.filter(user=user, product_id=product_id).exists():
+            if not Product.objects.filter(id=product_id).exists():
+                return JsonResponse({'MESSAGE': 'INVALID_PRODUCT'}, status=400)
+
+            cart_items = Cart.objects.filter(user=user, product_id=product_id)
+
+            if not cart_items.exists():
                 Cart.objects.create(user=user, product_id=product_id, amount=amount)
                 return JsonResponse({'MESSAGE': 'CREATED'}, status=201)
 
-            cart_item  = Cart.objects.get(user=user, product_id=product_id)
+            cart_item  = cart_items[0]
             amount    += cart_item.amount
             amount     = amount if not amount > shop_validator.AMOUNT_MAX_VALUE else 99
 
