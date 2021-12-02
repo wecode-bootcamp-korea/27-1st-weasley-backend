@@ -1,4 +1,4 @@
-import json, bcrypt
+import json, bcrypt, jwt
 
 from django.http            import JsonResponse
 from django.views           import View
@@ -6,6 +6,8 @@ from django.core.exceptions import ValidationError
 
 from users.models           import User
 from users.validators       import UserValidator
+from core.utils             import authorization
+from my_settings            import SECRET_KEY, ALGORITHM
 
 class SignupView(View):
     def post(self, request):
@@ -44,7 +46,10 @@ class SignupView(View):
                 gender        = gender,
             )
 
-            return JsonResponse({'MESSAGE' : 'CREATED'}, status = 201)
+            info = {'user_id' : User.objects.get(email=email).id}
+            access_token = jwt.encode(info, SECRET_KEY, ALGORITHM)
+
+            return JsonResponse({'MESSAGE' : 'CREATED', 'TOKEN' : access_token}, status = 201)
 
         except KeyError:
             return JsonResponse({'MESSAGE' : 'KEY_ERROR'}, status = 400)
