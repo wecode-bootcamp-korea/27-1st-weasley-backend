@@ -20,6 +20,10 @@ class User(TimeStampModel):
     def __str__(self):
         return self.name
 
+    @property
+    def mosaic_name(self):
+        return self.name[0] + '*' * (len(self.name)-1)
+
 
 class Address(models.Model):
     user     = models.ForeignKey('User', on_delete=models.CASCADE)
