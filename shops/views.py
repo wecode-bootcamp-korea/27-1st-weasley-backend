@@ -34,13 +34,11 @@ class CartView(View):
             {
                 'product_id'    : cart_item.product.id,
                 'category_name' : cart_item.product.category.name,
-                'tags'          : list(map(
-                    lambda x: x.name, cart_item.product.tags.all()
-                )),
+                'tags'          : [tag.name for tag in cart_item.product.tags.all()],
                 'ml_volume'     : cart_item.product.category.ml_volume,
                 'price'         : cart_item.product.category.price,
                 'amount'        : cart_item.amount,
-                'thumb'         : cart_item.thumb
+                'thumb'         : cart_item.product.thumb[0].url
             }
             for cart_item in cart_list
         ]
