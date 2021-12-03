@@ -54,10 +54,10 @@ class CartView(View):
     @authorization
     def delete(self, request, **kwargs):
         try:
-            product_id = kwargs['product_id']
+            cart_id = kwargs['cart_id']
             user       = request.user
 
-            cart_item  = Cart.objects.get(user=user, product_id=product_id)
+            cart_item  = Cart.objects.get(user=user, id=cart_id)
             cart_item.delete()
 
             return JsonResponse({'MESSAGE': 'DELETED'}, status=200)
@@ -66,10 +66,10 @@ class CartView(View):
             return JsonResponse({'MESSAGE': 'PARAM_REQUIRED'}, status=400)
 
         except Cart.DoesNotExist:
-            return JsonResponse({'MESSAGE': 'INVALID_PRODUCT'}, status=400)
+            return JsonResponse({'MESSAGE': 'INVALID_CART'}, status=400)
 
         except ValueError:
-            return JsonResponse({'MESSAGE': 'INVALID_PRODUCT'}, status=400)
+            return JsonResponse({'MESSAGE': 'INVALID_CART'}, status=400)
 
     @authorization
     def post(self, request):
@@ -118,3 +118,37 @@ class CartView(View):
 
         except Cart.DoesNotExist:
             return JsonResponse({'MESSAGE': 'INVALID_PRODUCT'}, status=400)
+
+    @authorization
+    def patch(self, request, **kwargs):
+        try:
+            data    = json.loads(request.body)
+
+            user    = request.user
+
+            cart_id = kwargs['cart_id']
+            amount  = data['amount']
+
+            ShopValidator().validate_amount(amount)
+
+            cart_item = Cart.objects.get(id=cart_id, user=user)
+
+            cart_item.amount = amount
+            cart_item.save()
+
+            return JsonResponse({'MESSAGE': 'SUCCESS'}, status=200)
+
+        except json.decoder.JSONDecodeError:
+            return JsonResponse({'MESSAGE': 'BODY_REQUIRED'}, status=400)
+
+        except KeyError:
+            return JsonResponse({'MESSAGE': 'KEY_ERROR'}, status=400)
+
+        except Cart.DoesNotExist:
+            return JsonResponse({'MESSAGE': 'INVALID_CART'}, status=400)
+
+        except ValueError:
+            return JsonResponse({'MESSAGE': 'INVALID_CART'}, status=400)
+
+        except ValidationError as e:
+            return JsonResponse({'MESSAGE': e.message}, status=400)
