@@ -12,7 +12,7 @@ from shops.validators       import ShopValidator
 
 class CartView(View):
     @authorization
-    def get(self, request):
+    def get(self, request, **kwargs):
         user = request.user
 
         cart_list = Cart.objects.filter(
@@ -47,18 +47,18 @@ class CartView(View):
         return JsonResponse({'MESSAGE': 'SUCCESS', 'RESULT': results}, status=200)
 
     @authorization
-    def patch(self, request):
+    def patch(self, request, **kwargs):
         try:
             data       = json.loads(request.body)
 
             user       = request.user
 
-            product_id = data['product_id']
+            product_id = kwargs['product_id']
             amount     = data['amount']
 
-            cart_item = Cart.objects.get(product_id=product_id, user=user)
-
             ShopValidator().validate_amount(amount)
+
+            cart_item = Cart.objects.get(product_id=product_id, user=user)
 
             cart_item.amount = amount
             cart_item.save()
