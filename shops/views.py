@@ -1,17 +1,18 @@
 import json
 
-from django.views     import View
-from django.http      import JsonResponse
-from django.db.models import Prefetch
+from django.views           import View
+from django.http            import JsonResponse
+from django.db.models       import Prefetch
+from django.core.exceptions import ValidationError
 
-from shops.models     import Cart
-from products.models  import Image
-from core.utils       import authorization
-
+from shops.models           import Cart
+from products.models        import Image
+from core.utils             import authorization
+from shops.validators       import ShopValidator
 
 class CartView(View):
     @authorization
-    def get(self, request):
+    def get(self, request, **kwargs):
         user = request.user
 
         cart_list = Cart.objects.filter(
@@ -44,3 +45,37 @@ class CartView(View):
         ]
 
         return JsonResponse({'MESSAGE': 'SUCCESS', 'RESULT': results}, status=200)
+
+    @authorization
+    def patch(self, request, **kwargs):
+        try:
+            data       = json.loads(request.body)
+
+            user       = request.user
+
+            product_id = kwargs['product_id']
+            amount     = data['amount']
+
+            ShopValidator().validate_amount(amount)
+
+            cart_item = Cart.objects.get(product_id=product_id, user=user)
+
+            cart_item.amount = amount
+            cart_item.save()
+
+            return JsonResponse({'MESSAGE': 'SUCCESS'}, status=200)
+
+        except json.decoder.JSONDecodeError:
+            return JsonResponse({'MESSAGE': 'BODY_REQUIRED'}, status=400)
+
+        except KeyError:
+            return JsonResponse({'MESSAGE': 'KEY_ERROR'}, status=400)
+
+        except Cart.DoesNotExist:
+            return JsonResponse({'MESSAGE': 'INVALID_PRODUCT'}, status=400)
+
+        except ValueError:
+            return JsonResponse({'MESSAGE': 'INVALID_PRODUCT'}, status=400)
+        
+        except ValidationError as e:
+            return JsonResponse({'MESSAGE': e.message}, status=400)
