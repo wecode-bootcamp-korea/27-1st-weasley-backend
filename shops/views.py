@@ -1,13 +1,14 @@
 import json
 
-from django.views     import View
-from django.http      import JsonResponse
-from django.db.models import Prefetch
+from django.views           import View
+from django.http            import JsonResponse
+from django.db.models       import Prefetch
+from django.core.exceptions import ValidationError
 
-from shops.models     import Cart
-from products.models  import Image
-from core.utils       import authorization
-
+from shops.models           import Cart
+from products.models        import Image
+from core.utils             import authorization
+from shops.validators       import ShopValidator
 
 class CartView(View):
     @authorization
@@ -44,6 +45,26 @@ class CartView(View):
         ]
 
         return JsonResponse({'MESSAGE': 'SUCCESS', 'RESULT': results}, status=200)
+
+    @authorization
+    def delete(self, request, **kwargs):
+        try:
+            product_id = kwargs['product_id']
+            user       = request.user
+
+            cart_item  = Cart.objects.get(user=user, product_id=product_id)
+            cart_item.delete()
+
+            return JsonResponse({'MESSAGE': 'DELETED'}, status=200)
+
+        except KeyError:
+            return JsonResponse({'MESSAGE': 'PARAM_REQUIRED'}, status=400)
+
+        except Cart.DoesNotExist:
+            return JsonResponse({'MESSAGE': 'INVALID_PRODUCT'}, status=400)
+
+        except ValueError:
+            return JsonResponse({'MESSAGE': 'INVALID_PRODUCT'}, status=400)
 
     @authorization
     def delete(self, request, **kwargs):
