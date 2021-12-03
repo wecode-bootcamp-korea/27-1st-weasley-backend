@@ -11,7 +11,7 @@ from core.utils       import authorization
 
 class CartView(View):
     @authorization
-    def get(self, request):
+    def get(self, request, **kwargs):
         user = request.user
 
         cart_list = Cart.objects.filter(
@@ -46,9 +46,9 @@ class CartView(View):
         return JsonResponse({'MESSAGE': 'SUCCESS', 'RESULT': results}, status=200)
 
     @authorization
-    def delete(self, request):
+    def delete(self, request, **kwargs):
         try:
-            product_id = request.GET['product_id']
+            product_id = kwargs['product_id']
             user       = request.user
 
             cart_item  = Cart.objects.get(user=user, product_id=product_id)
