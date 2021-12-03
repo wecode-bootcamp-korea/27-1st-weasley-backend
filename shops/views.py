@@ -34,13 +34,6 @@ class CartView(View):
 
         results = {
             "point": user.point,
-            "addresses": [
-                {
-                    "id": address.id,
-                    "location": address.location
-                }
-                for address in user.address_set.all()
-            ],
             "cart_items": [
                 {
                     'cart_id'       : cart_item.id,
