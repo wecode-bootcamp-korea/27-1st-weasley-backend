@@ -11,7 +11,7 @@ from core.utils       import authorization
 
 class CartView(View):
     @authorization
-    def get(self, request):
+    def get(self, request, **kwargs):
         user = request.user
 
         cart_list = Cart.objects.filter(
