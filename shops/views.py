@@ -32,12 +32,7 @@ class CartView(View):
             'product__tags'
         )
 
-        total_price = cart_list.aggregate(
-            total_price = Sum(F('product__category__price')*F('amount'))
-        )['total_price']
-
         results = {
-            "total_price": total_price,
             "point": user.point,
             "addresses": [
                 {
