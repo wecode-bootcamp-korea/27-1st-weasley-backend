@@ -32,19 +32,22 @@ class CartView(View):
             'product__tags'
         )
 
-        results = [
-            {
-                'cart_id'       : cart_item.id,
-                'product_id'    : cart_item.product.id,
-                'category_name' : cart_item.product.category.name,
-                'tags'          : [tag.name for tag in cart_item.product.tags.all()],
-                'ml_volume'     : cart_item.product.category.ml_volume,
-                'price'         : cart_item.product.category.price,
-                'amount'        : cart_item.amount,
-                'thumb'         : cart_item.product.thumb[0].url
-            }
-            for cart_item in cart_list
-        ]
+        results = {
+             "point": user.point,
+             "cart_items": [
+                 {
+                     'cart_id'       : cart_item.id,
+                     'product_id'    : cart_item.product.id,
+                     'category_name' : cart_item.product.category.name,
+                     'tags'          : [tag.name for tag in cart_item.product.tags.all()],
+                     'ml_volume'     : cart_item.product.category.ml_volume,
+                     'price'         : cart_item.product.category.price,
+                     'amount'        : cart_item.amount,
+                     'thumb'         : cart_item.product.thumb[0].url
+                 }
+                 for cart_item in cart_list
+             ]
+         }
 
         return JsonResponse({'MESSAGE': 'SUCCESS', 'RESULT': results}, status=200)
 
