@@ -48,38 +48,24 @@ class CartView(View):
         return JsonResponse({'MESSAGE': 'SUCCESS', 'RESULT': results}, status=200)
 
     @authorization
-    def patch(self, request, **kwargs):
+    def delete(self, request, **kwargs):
         try:
-            data       = json.loads(request.body)
-
+            product_id = kwargs['product_id']
             user       = request.user
 
-            product_id = kwargs['product_id']
-            amount     = data['amount']
+            cart_item  = Cart.objects.get(user=user, product_id=product_id)
+            cart_item.delete()
 
-            ShopValidator().validate_amount(amount)
-
-            cart_item        = Cart.objects.get(product_id=product_id, user=user)
-
-            cart_item.amount = amount
-            cart_item.save()
-
-            return JsonResponse({'MESSAGE': 'SUCCESS'}, status=200)
-
-        except json.decoder.JSONDecodeError:
-            return JsonResponse({'MESSAGE': 'BODY_REQUIRED'}, status=400)
+            return JsonResponse({'MESSAGE': 'DELETED'}, status=200)
 
         except KeyError:
-            return JsonResponse({'MESSAGE': 'KEY_ERROR'}, status=400)
+            return JsonResponse({'MESSAGE': 'PARAM_REQUIRED'}, status=400)
 
         except Cart.DoesNotExist:
             return JsonResponse({'MESSAGE': 'INVALID_PRODUCT'}, status=400)
 
         except ValueError:
             return JsonResponse({'MESSAGE': 'INVALID_PRODUCT'}, status=400)
-
-        except ValidationError as e:
-            return JsonResponse({'MESSAGE': e.message}, status=400)
 
     @authorization
     def post(self, request):
