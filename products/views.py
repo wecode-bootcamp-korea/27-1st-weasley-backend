@@ -13,7 +13,7 @@ class CategoryView(View):
                 'price'         : category.price,
                 'products'      : [
                             {
-                                'thumb' : product.image_set.filter(name='thumb')[0].url,
+                                'thumb' : product.image_set.get(name='thumb').url,
                                 'tags'  : [i.name for i in product.tags.all()],
                                 'id'    : product.id
                             }
@@ -22,6 +22,6 @@ class CategoryView(View):
             for category in Category.objects.all()
         ]
 
-        return JsonResponse({'RESULT':category_data}, status=200) 
+        return JsonResponse({'MESSAGE': 'SUCCESS', 'RESULT': category_data}, status=200) 
   
    
