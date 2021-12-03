@@ -2,7 +2,7 @@ import json
 
 from django.views           import View
 from django.http            import JsonResponse
-from django.db.models       import Prefetch
+from django.db.models       import Prefetch, Sum, F
 from django.core.exceptions import ValidationError
 from django.db              import IntegrityError
 
@@ -32,18 +32,34 @@ class CartView(View):
             'product__tags'
         )
 
-        results = [
-            {
-                'product_id'    : cart_item.product.id,
-                'category_name' : cart_item.product.category.name,
-                'tags'          : [tag.name for tag in cart_item.product.tags.all()],
-                'ml_volume'     : cart_item.product.category.ml_volume,
-                'price'         : cart_item.product.category.price,
-                'amount'        : cart_item.amount,
-                'thumb'         : cart_item.product.thumb[0].url
-            }
-            for cart_item in cart_list
-        ]
+        total_price = cart_list.aggregate(
+            total_price = Sum(F('product__category__price')*F('amount'))
+        )['total_price']
+
+        results = {
+            "total_price": total_price,
+            "point": user.point,
+            "addresses": [
+                {
+                    "id": address.id,
+                    "location": address.location
+                }
+                for address in user.address_set.all()
+            ],
+            "cart_items": [
+                {
+                    'cart_id'       : cart_item.id,
+                    'product_id'    : cart_item.product.id,
+                    'category_name' : cart_item.product.category.name,
+                    'tags'          : [tag.name for tag in cart_item.product.tags.all()],
+                    'ml_volume'     : cart_item.product.category.ml_volume,
+                    'price'         : cart_item.product.category.price,
+                    'amount'        : cart_item.amount,
+                    'thumb'         : cart_item.product.thumb[0].url
+                }
+                for cart_item in cart_list
+            ]
+        }
 
         return JsonResponse({'MESSAGE': 'SUCCESS', 'RESULT': results}, status=200)
 
