@@ -11,6 +11,7 @@ from products.models        import Image, Product
 from core.utils             import authorization
 from shops.validators       import ShopValidator
 
+
 class CartView(View):
     @authorization
     def get(self, request, **kwargs):
