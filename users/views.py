@@ -5,21 +5,23 @@ from django.views           import View
 from django.http            import JsonResponse
 from django.core.exceptions import ValidationError
 
-from users.models     import User
-from users.validators import UserValidator
-from my_settings      import SECRET_KEY, ALGORITHM
+from users.models           import User, Address
+from users.validators       import UserValidator
+from my_settings            import SECRET_KEY, ALGORITHM
+from core.utils             import authorization
+
 
 class SignupView(View):
     def post(self, request):
         try:
             data = json.loads(request.body)
 
-            name          = data['name']
-            phone         = data['phone']
-            email         = data['email']
-            date_of_birth = data['date_of_birth']
-            password      = data['password']
-            gender        = data['gender']
+            name           = data['name']
+            phone          = data['phone']
+            email          = data['email']
+            date_of_birth  = data['date_of_birth']
+            password       = data['password']
+            gender         = data['gender']
 
             user_validator = UserValidator()
             user_validator.validate_name(name)
@@ -29,7 +31,9 @@ class SignupView(View):
             user_validator.validate_password(password)
             user_validator.validate_gender(gender)
 
-            hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            hashed_password = bcrypt.hashpw(
+                password.encode('utf-8'), bcrypt.gensalt()
+            ).decode('utf-8')
 
             if User.objects.filter(email=email).exists():
                 return JsonResponse({'MESSAGE' : 'EMAIL_ALREADY_EXIST'}, status = 400)
@@ -58,6 +62,7 @@ class SignupView(View):
 
         except json.decoder.JSONDecodeError:
             return JsonResponse({'MESSAGE': 'BODY_REQUIRED'}, status=400)
+
 
 class UserCheckView(View):
     def post(self, request):
@@ -121,3 +126,21 @@ class SigninView(View):
 
         except AttributeError:
             return JsonResponse({'MESSAGE': 'LOGIN_FAILED'}, status=400)
+
+
+class AddressView(View):
+    @authorization
+    def get(self, request, **kwargs):
+        user      = request.user
+
+        addresses = Address.objects.filter(user=user)
+
+        results   = [
+            {
+                'address_id' : address.id,
+                'location'   : address.location,
+            }
+            for address in addresses
+        ]
+
+        return JsonResponse({'MESSAGE': 'SUCCESS', 'RESULT': results}, status=200)
