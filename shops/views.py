@@ -174,6 +174,8 @@ class OrderView(View):
             user.point -= total_price
             user.save()
 
+            cart_list.delete()
+
             order.order_status_id = 2
             order.save()
 
