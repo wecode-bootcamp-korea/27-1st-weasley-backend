@@ -128,7 +128,7 @@ class OrderView(View):
             user_point = user.point
 
             address_id = data['address_id']
-            address    = Address.objects.get(id=address_id)
+            address    = Address.objects.get(user=user, id=address_id)
 
             cart_list  = Cart.objects.filter(
                 user = user
