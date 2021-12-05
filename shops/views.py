@@ -1,15 +1,17 @@
-import json
+import json, datetime
 
+import bcrypt
 from django.views           import View
 from django.http            import JsonResponse
-from django.db.models       import Prefetch
+from django.db.models       import Prefetch, F, Sum
 from django.core.exceptions import ValidationError
 from django.db              import IntegrityError
 
-from shops.models           import Cart
+from shops.models           import Cart, Order, OrderItem
 from products.models        import Image, Product
 from core.utils             import authorization
 from shops.validators       import ShopValidator
+from users.models           import Address
 
 class CartView(View):
     @authorization
@@ -17,7 +19,7 @@ class CartView(View):
         user = request.user
 
         cart_list = Cart.objects.filter(
-            user__id=user.id
+            user=user
         ).select_related(
             'product__category',
             'product'
@@ -114,3 +116,72 @@ class CartView(View):
 
         except Cart.DoesNotExist:
             return JsonResponse({'MESSAGE': 'INVALID_PRODUCT'}, status=400)
+
+
+class OrderView(View):
+    @authorization
+    def post(self, request, **kwargs):
+        try:
+            data       = json.loads(request.body)
+
+            user       = request.user
+            user_point = user.point
+
+            print(124121234)
+            address_id = data['address_id']
+            address    = Address.objects.get(id=address_id)
+
+            cart_list  = Cart.objects.filter(
+                user = user
+            ).select_related(
+                'product',
+                'product__category'
+            ).annotate(
+                price = Sum(F('amount')*F('product__category__price'))
+            )
+
+            total_price  = cart_list.aggregate(
+                total_price=Sum('price')
+            )['total_price']
+
+            if user_point < total_price:
+                return JsonResponse({'MESSAGE': 'POINT_TOO_SMALL'}, status=400)
+
+            order_number = bcrypt.gensalt().decode('utf-8')
+
+            while Order.objects.filter(order_number=order_number).exists():
+                order_number = bcrypt.gensalt().decode('utf-8')
+
+            order = Order(
+                user            = user,
+                address         = address,
+                order_number    = order_number,
+                order_status_id = 1
+            )
+
+            order_items = [
+                OrderItem(
+                    product              = cart_item.product,
+                    order_item_status_id = 1,
+                    amount               = cart_item.amount,
+                    order                = order
+                )
+                for cart_item in cart_list
+            ]
+
+            order.save()
+            OrderItem.objects.bulk_create(order_items)
+
+            user.point -= total_price
+            user.save()
+
+            return JsonResponse({'MESSAGE': 'SUCCESS'}, status=200)
+
+        except json.decoder.JSONDecodeError:
+            return JsonResponse({'MESSAGE': 'BODY_REQUIRED'}, status=400)
+
+        except Address.DoesNotExist:
+            return JsonResponse({'MESSAGE': 'INVALID_ADDRESS'}, status=400)
+
+        except AttributeError:
+            return JsonResponse({'MESSAGE': 'INVALID_ADDRESS'}, status=400)
