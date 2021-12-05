@@ -130,7 +130,7 @@ class AddressView(View):
     @authorization
     def post(self, request, **kwargs):
         try:
-            data     = json.loads(request.body)
+            data = json.loads(request.body)
 
             user     = request.user
 
@@ -151,3 +151,6 @@ class AddressView(View):
 
         except ValidationError as e:
             return JsonResponse({'MESSAGE': e.message}, status=400)
+
+        except json.decoder.JSONDecodeError:
+            return JsonResponse({'MESSAGE': 'BODY_REQUIRED'}, status=400)
