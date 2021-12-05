@@ -127,7 +127,6 @@ class OrderView(View):
             user       = request.user
             user_point = user.point
 
-            print(124121234)
             address_id = data['address_id']
             address    = Address.objects.get(id=address_id)
 
