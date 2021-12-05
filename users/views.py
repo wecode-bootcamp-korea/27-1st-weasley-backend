@@ -5,21 +5,23 @@ from django.views           import View
 from django.http            import JsonResponse
 from django.core.exceptions import ValidationError
 
-from users.models     import User
-from users.validators import UserValidator
-from my_settings      import SECRET_KEY, ALGORITHM
+from users.models           import User, Address
+from users.validators       import UserValidator
+from my_settings            import SECRET_KEY, ALGORITHM
+from core.utils             import authorization
+
 
 class SignupView(View):
     def post(self, request):
         try:
             data = json.loads(request.body)
 
-            name          = data['name']
-            phone         = data['phone']
-            email         = data['email']
-            date_of_birth = data['date_of_birth']
-            password      = data['password']
-            gender        = data['gender']
+            name           = data['name']
+            phone          = data['phone']
+            email          = data['email']
+            date_of_birth  = data['date_of_birth']
+            password       = data['password']
+            gender         = data['gender']
 
             user_validator = UserValidator()
             user_validator.validate_name(name)
@@ -58,6 +60,7 @@ class SignupView(View):
 
         except json.decoder.JSONDecodeError:
             return JsonResponse({'MESSAGE': 'BODY_REQUIRED'}, status=400)
+
 
 class UserCheckView(View):
     def post(self, request):
@@ -121,3 +124,30 @@ class SigninView(View):
 
         except AttributeError:
             return JsonResponse({'MESSAGE': 'LOGIN_FAILED'}, status=400)
+
+
+class AddressView(View):
+    @authorization
+    def post(self, request, **kwargs):
+        try:
+            data     = json.loads(request.body)
+
+            user     = request.user
+
+            location = data['location']
+
+            UserValidator().validate_location(location)
+
+            _, is_created =\
+                Address.objects.get_or_create(user=user, location=location)
+
+            if is_created:
+                return JsonResponse({'MESSAGE': 'CREATED'}, status=200)
+
+            return JsonResponse({'MESSAGE': 'ADDRESS_ALREADY_EXIST'}, status=400)
+
+        except KeyError:
+            return JsonResponse({'MESSAGE': 'KEY_ERROR'}, status=400)
+
+        except ValidationError as e:
+            return JsonResponse({'MESSAGE': e.message}, status=400)
