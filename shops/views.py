@@ -175,6 +175,9 @@ class OrderView(View):
             user.point -= total_price
             user.save()
 
+            order.order_status_id = 2
+            order.save()
+
             return JsonResponse({'MESSAGE': 'SUCCESS'}, status=200)
 
         except json.decoder.JSONDecodeError:
