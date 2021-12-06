@@ -31,7 +31,9 @@ class SignupView(View):
             user_validator.validate_password(password)
             user_validator.validate_gender(gender)
 
-            hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            hashed_password = bcrypt.hashpw(
+                password.encode('utf-8'), bcrypt.gensalt()
+            ).decode('utf-8')
 
             if User.objects.filter(email=email).exists():
                 return JsonResponse({'MESSAGE' : 'EMAIL_ALREADY_EXIST'}, status = 400)
@@ -154,3 +156,18 @@ class AddressView(View):
 
         except json.decoder.JSONDecodeError:
             return JsonResponse({'MESSAGE': 'BODY_REQUIRED'}, status=400)
+
+    def get(self, request, **kwargs):
+        user      = request.user
+
+        addresses = Address.objects.filter(user=user)
+
+        results   = [
+            {
+                'address_id' : address.id,
+                'location'   : address.location,
+            }
+            for address in addresses
+        ]
+
+        return JsonResponse({'MESSAGE': 'SUCCESS', 'RESULT': results}, status=200)
