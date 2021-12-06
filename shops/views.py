@@ -5,9 +5,9 @@ from django.views           import View
 from django.http            import JsonResponse
 from django.db.models       import Prefetch, F, Sum
 from django.core.exceptions import ValidationError
-from django.db              import IntegrityError
+from django.db              import IntegrityError, transaction, DatabaseError
 
-from shops.models           import Cart, Order, OrderItem
+from shops.models           import Cart, Order, OrderItem, OrderStatus, OrderItemStatus
 from products.models        import Image, Product
 from core.utils             import authorization
 from shops.validators       import ShopValidator
@@ -121,7 +121,7 @@ class CartView(View):
 
         except Cart.DoesNotExist:
             return JsonResponse({'MESSAGE': 'INVALID_PRODUCT'}, status=400)
-          
+
     @authorization
     def patch(self, request, **kwargs):
         try:
@@ -138,7 +138,7 @@ class CartView(View):
 
             cart_item.amount = amount
             cart_item.save()
-            
+
             return JsonResponse({'MESSAGE': 'SUCCESS'}, status=200)
 
         except json.decoder.JSONDecodeError:
@@ -164,10 +164,8 @@ class OrderView(View):
             data       = json.loads(request.body)
 
             user       = request.user
-            user_point = user.point
 
-            address_id = data['address_id']
-            address    = Address.objects.get(user=user, id=address_id)
+            address    = Address.objects.get(user=user, id=data['address_id'])
 
             cart_list  = Cart.objects.filter(
                 user = user
@@ -182,47 +180,50 @@ class OrderView(View):
                 total_price=Sum('price')
             )['total_price']
 
-            if user_point < total_price:
+            if user.point < total_price:
                 return JsonResponse({'MESSAGE': 'POINT_TOO_SMALL'}, status=400)
 
-            order_number = uuid.uuid4()
-
-            while Order.objects.filter(order_number=order_number).exists():
-                order_number = uuid.uuid4()
-
-            order = Order(
-                user            = user,
-                address         = address,
-                order_number    = order_number,
-                order_status_id = 1
-            )
-
-            order_items = [
-                OrderItem(
-                    product              = cart_item.product,
-                    order_item_status_id = 1,
-                    amount               = cart_item.amount,
-                    order                = order
+            with transaction.atomic():
+                order = Order(
+                    user            = user,
+                    address         = address,
+                    order_number    = uuid.uuid4(),
+                    order_status_id = OrderStatus.Status.UNDONE
                 )
-                for cart_item in cart_list
-            ]
 
-            order.save()
-            OrderItem.objects.bulk_create(order_items)
+                order_items = [
+                    OrderItem(
+                        product              = cart_item.product,
+                        order_item_status_id = OrderItemStatus.Status.PRESHIPPIN,
+                        amount               = cart_item.amount,
+                        order                = order
+                    )
+                    for cart_item in cart_list
+                ]
 
-            user.point -= total_price
-            user.save()
+                user.point -= total_price
+                user.save()
 
-            cart_list.delete()
+                cart_list.delete()
 
-            order.order_status_id = 2
-            order.save()
-            
+                order.order_status_id = OrderStatus.Status.DONE
+                order.save()
+
+                OrderItem.objects.bulk_create(order_items)
+
+                return JsonResponse({'MESSAGE': 'CREATED'}, status=201)
+
         except json.decoder.JSONDecodeError:
             return JsonResponse({'MESSAGE': 'BODY_REQUIRED'}, status=400)
+
+        except KeyError:
+            return JsonResponse({'MESSAGE': 'KEY_ERROR'}, status=400)
 
         except Address.DoesNotExist:
             return JsonResponse({'MESSAGE': 'INVALID_ADDRESS'}, status=400)
 
         except AttributeError:
             return JsonResponse({'MESSAGE': 'INVALID_ADDRESS'}, status=400)
+
+        except DatabaseError:
+            return JsonResponse({'MESSAGE': 'DATABASE_ERROR'}, status=400)
