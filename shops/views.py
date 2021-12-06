@@ -58,7 +58,12 @@ class CartView(View):
             cart_id   = kwargs['cart_id']
             user      = request.user
 
-            cart_item = Cart.objects.get(id=cart_id, user=user)
+            if int(cart_id) == 0:
+                cart_item = Cart.objects.filter(user=user)
+
+            else:
+                cart_item = Cart.objects.get(id=cart_id, user=user)
+
             cart_item.delete()
 
             return JsonResponse({'MESSAGE': 'DELETED'}, status=200)
