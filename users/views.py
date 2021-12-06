@@ -140,11 +140,10 @@ class AddressView(View):
 
             UserValidator().validate_location(location)
 
-            _, is_created =\
-                Address.objects.get_or_create(user=user, location=location)
+            address, is_created = Address.objects.get_or_create(user=user, location=location)
 
             if is_created:
-                return JsonResponse({'MESSAGE': 'CREATED'}, status=200)
+                return JsonResponse({'MESSAGE': 'CREATED'}, status=201)
 
             return JsonResponse({'MESSAGE': 'ADDRESS_ALREADY_EXIST'}, status=400)
 
@@ -157,6 +156,7 @@ class AddressView(View):
         except json.decoder.JSONDecodeError:
             return JsonResponse({'MESSAGE': 'BODY_REQUIRED'}, status=400)
 
+    @authorization
     def get(self, request, **kwargs):
         user      = request.user
 
