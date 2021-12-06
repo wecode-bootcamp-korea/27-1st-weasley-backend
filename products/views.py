@@ -40,4 +40,4 @@ class ReviewView(View):
               return JsonResponse({'MESSAGE' : 'KEY_ERROR'}, status=400)
 
           except json.decoder.JSONDecodeError:
-              return JsonResponse({'MESSAGE' : 'BODY_REQUIRED'}, status=400
+              return JsonResponse({'MESSAGE' : 'BODY_REQUIRED'}, status=400)
