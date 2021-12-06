@@ -156,7 +156,7 @@ class CartView(View):
         except ValidationError as e:
             return JsonResponse({'MESSAGE': e.message}, status=400)
 
-          
+
 class AllOrderView(View):
     @authorization
     def get(self, request):
@@ -189,7 +189,7 @@ class AllOrderView(View):
 
         return JsonResponse({'MESSAGE': 'SUCCESS', 'RESULT': results}, status=200)
 
-      
+
 class OrderView(View):
     @authorization
     def post(self, request, **kwargs):
@@ -248,7 +248,7 @@ class OrderView(View):
 
         except json.decoder.JSONDecodeError:
             return JsonResponse({'MESSAGE': 'BODY_REQUIRED'}, status=400)
-        
+
         except KeyError:
             return JsonResponse({'MESSAGE': 'KEY_ERROR'}, status=400)
 
@@ -304,9 +304,9 @@ class OrderView(View):
             }
 
             return JsonResponse({'MESSAGE': 'SUCCESS', 'RESULT': results}, status=200)
-        
+
         except KeyError:
             return JsonResponse({'MESSAGE': 'KEY_ERROR'}, status=400)
 
-          except Order.DoesNotExist:
+        except Order.DoesNotExist:
             return JsonResponse({'MESSAGE': 'INVALID_ORDER'}, status=400)
