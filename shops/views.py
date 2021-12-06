@@ -144,7 +144,7 @@ class CartView(View):
 
         except KeyError:
             return JsonResponse({'MESSAGE': 'KEY_ERROR'}, status=400)
-          
+
         except Cart.DoesNotExist:
             return JsonResponse({'MESSAGE': 'INVALID_CART'}, status=400)
 
@@ -153,8 +153,8 @@ class CartView(View):
 
         except ValidationError as e:
             return JsonResponse({'MESSAGE': e.message}, status=400)
-          
-          
+
+
 class AllOrderView(View):
     @authorization
     def get(self, request):
@@ -212,8 +212,7 @@ class OrderView(View):
 
             results = {
                 'name'        : user.name,
-                'address'     : order.address.location\
-                    if order.address else '배송지 정보가 없습니다.',
+                'address'     : order.address.location if order.address else '배송지 정보가 없습니다.',
                 'phone'       : user.phone,
                 'order_items' : [
                     {
@@ -221,13 +220,9 @@ class OrderView(View):
                         'amount'            : order_item.amount,
                         'ml_volume'         : order_item.product.category.ml_volume,
                         'thumb'             : order_item.product.thumb[0].url,
-                        'tags'              : [
-                            tag.name
-                            for tag in order_item.product.tags.all()
-                        ],
+                        'tags'              : [tag.name for tag in order_item.product.tags.all()],
                         'order_item_status' : order_item.order_item_status.status,
-                        'shipping_company'  : order_item.shipping_company.name\
-                            if order_item.shipping_company else '배송 업체 정보가 없습니다.',
+                        'shipping_company'  : order_item.shipping_company.name if order_item.shipping_company else '배송 업체 정보가 없습니다.',
                         'shipping_number'   : order_item.shipping_number
                     }
                     for order_item in order.orderitem_set.all()
@@ -235,9 +230,9 @@ class OrderView(View):
             }
 
             return JsonResponse({'MESSAGE': 'SUCCESS', 'RESULT': results}, status=200)
-          
+
         except KeyError:
             return JsonResponse({'MESSAGE': 'KEY_ERROR'}, status=400)
-          
+
         except Order.DoesNotExist:
             return JsonResponse({'MESSAGE': 'INVALID_ORDER'}, status=400)
