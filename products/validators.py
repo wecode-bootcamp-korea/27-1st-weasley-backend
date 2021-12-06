@@ -13,3 +13,4 @@ class ProductValidator:
 
         if len(content) > self.CONTENT_MAX_LENGTH:
             raise ValidationError('CONTENT_TOO_LONG')
+            
