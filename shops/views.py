@@ -1,4 +1,4 @@
-import json, datetime
+import json, datetime, uuid
 
 import bcrypt
 from django.views           import View
@@ -185,10 +185,10 @@ class OrderView(View):
             if user_point < total_price:
                 return JsonResponse({'MESSAGE': 'POINT_TOO_SMALL'}, status=400)
 
-            order_number = bcrypt.gensalt().decode('utf-8')
+            order_number = uuid.uuid4()
 
             while Order.objects.filter(order_number=order_number).exists():
-                order_number = bcrypt.gensalt().decode('utf-8')
+                order_number = uuid.uuid4()
 
             order = Order(
                 user            = user,
