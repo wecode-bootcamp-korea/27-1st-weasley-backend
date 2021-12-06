@@ -5,7 +5,7 @@ from shops.views import CartView, AllOrderView, OrderView
 urlpatterns = [
     path('/carts', include([
         path('', CartView.as_view()),
-        path('/<int:product_id>', CartView.as_view())
+        path('/<int:cart_id>', CartView.as_view())
     ])),
     path('/orders', include([
         path('/all', AllOrderView.as_view()),
