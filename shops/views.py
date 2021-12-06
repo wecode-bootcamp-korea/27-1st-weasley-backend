@@ -11,6 +11,7 @@ from products.models        import Image, Product
 from core.utils             import authorization
 from shops.validators       import ShopValidator
 
+
 class CartView(View):
     @authorization
     def get(self, request, **kwargs):
@@ -54,10 +55,10 @@ class CartView(View):
     @authorization
     def delete(self, request, **kwargs):
         try:
-            cart_id = kwargs['cart_id']
-            user       = request.user
+            cart_id   = kwargs['cart_id']
+            user      = request.user
 
-            cart_item  = Cart.objects.get(user=user, id=cart_id)
+            cart_item = Cart.objects.get(id=cart_id, user=user)
             cart_item.delete()
 
             return JsonResponse({'MESSAGE': 'DELETED'}, status=200)
@@ -72,7 +73,7 @@ class CartView(View):
             return JsonResponse({'MESSAGE': 'INVALID_CART'}, status=400)
 
     @authorization
-    def post(self, request):
+    def post(self, request, **kwargs):
         try:
             data           = json.loads(request.body)
 
@@ -111,13 +112,13 @@ class CartView(View):
             return JsonResponse({'MESSAGE': e.message}, status=400)
 
         except ValueError:
-            return JsonResponse({'MESSAGE': 'INVALID_PRODUCT'}, status=400)
+            return JsonResponse({'MESSAGE': 'INVALID_CART'}, status=400)
 
         except IntegrityError:
-            return JsonResponse({'MESSAGE': 'INVALID_PRODUCT'}, status=400)
+            return JsonResponse({'MESSAGE': 'INVALID_CART'}, status=400)
 
         except Cart.DoesNotExist:
-            return JsonResponse({'MESSAGE': 'INVALID_PRODUCT'}, status=400)
+            return JsonResponse({'MESSAGE': 'INVALID_CART'}, status=400)
 
     @authorization
     def patch(self, request, **kwargs):
