@@ -263,8 +263,6 @@ class OrderView(View):
         except DatabaseError:
             return JsonResponse({'MESSAGE': 'DATABASE_ERROR'}, status=400)
 
-
-class OrderView(View):
     @authorization
     def get(self, request, **kwargs):
         try:
