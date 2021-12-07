@@ -1,15 +1,17 @@
-import json, datetime
+import json, datetime, uuid
 
+import bcrypt
 from django.views           import View
 from django.http            import JsonResponse
-from django.db.models       import Prefetch, Count
+from django.db.models       import Prefetch, F, Sum, Count
 from django.core.exceptions import ValidationError
-from django.db              import IntegrityError
+from django.db              import IntegrityError, transaction, DatabaseError
 
-from shops.models           import Cart, Order
+from shops.models           import Cart, Order, OrderItem, OrderStatus, OrderItemStatus
 from products.models        import Image, Product
 from core.utils             import authorization
 from shops.validators       import ShopValidator
+from users.models           import Address
 
 
 class CartView(View):
@@ -18,7 +20,7 @@ class CartView(View):
         user = request.user
 
         cart_list = Cart.objects.filter(
-            user__id=user.id
+            user=user
         ).select_related(
             'product__category',
             'product'
@@ -123,7 +125,7 @@ class CartView(View):
             return JsonResponse({'MESSAGE': 'INVALID_CART'}, status=400)
 
         except Cart.DoesNotExist:
-            return JsonResponse({'MESSAGE': 'INVALID_CART'}, status=400)
+            return JsonResponse({'MESSAGE': 'INVALID_PRODUCT'}, status=400)
 
     @authorization
     def patch(self, request, **kwargs):
@@ -191,6 +193,78 @@ class AllOrderView(View):
         ]
 
         return JsonResponse({'MESSAGE': 'SUCCESS', 'RESULT': results}, status=200)
+
+
+class OrderView(View):
+    @authorization
+    def post(self, request, **kwargs):
+        try:
+            data       = json.loads(request.body)
+
+            user       = request.user
+
+            address    = Address.objects.get(user=user, id=data['address_id'])
+
+            cart_list  = Cart.objects.filter(
+                user = user
+            ).select_related(
+                'product',
+                'product__category'
+            ).annotate(
+                price = Sum(F('amount')*F('product__category__price'))
+            )
+
+            total_price  = cart_list.aggregate(
+                total_price=Sum('price')
+            )['total_price']
+
+            if user.point < total_price:
+                return JsonResponse({'MESSAGE': 'POINT_TOO_SMALL'}, status=400)
+
+            with transaction.atomic():
+                order = Order(
+                    user            = user,
+                    address         = address,
+                    order_number    = uuid.uuid4(),
+                    order_status_id = OrderStatus.Status.UNDONE
+                )
+
+                order_items = [
+                    OrderItem(
+                        product              = cart_item.product,
+                        order_item_status_id = OrderItemStatus.Status.PRESHIPPIN,
+                        amount               = cart_item.amount,
+                        order                = order
+                    )
+                    for cart_item in cart_list
+                ]
+
+                user.point -= total_price
+                user.save()
+
+                cart_list.delete()
+
+                order.order_status_id = OrderStatus.Status.DONE
+                order.save()
+
+                OrderItem.objects.bulk_create(order_items)
+
+                return JsonResponse({'MESSAGE': 'CREATED'}, status=201)
+
+        except json.decoder.JSONDecodeError:
+            return JsonResponse({'MESSAGE': 'BODY_REQUIRED'}, status=400)
+
+        except KeyError:
+            return JsonResponse({'MESSAGE': 'KEY_ERROR'}, status=400)
+
+        except Address.DoesNotExist:
+            return JsonResponse({'MESSAGE': 'INVALID_ADDRESS'}, status=400)
+
+        except AttributeError:
+            return JsonResponse({'MESSAGE': 'INVALID_ADDRESS'}, status=400)
+
+        except DatabaseError:
+            return JsonResponse({'MESSAGE': 'DATABASE_ERROR'}, status=400)
 
 
 class OrderView(View):
