@@ -15,12 +15,25 @@ class OrderItemStatus(models.Model):
     status = models.CharField(max_length=10)
 
 
+    class Status(models.IntegerChoices):
+        PRESHIPPIN = 1
+        SHIPPING   = 2
+        DONE       = 3
+        CANCELED   = 4
+
+
     class Meta:
         db_table = 'order_item_status'
 
 
 class OrderStatus(models.Model):
     status = models.CharField(max_length=10)
+
+
+    class Status(models.IntegerChoices):
+        UNDONE   = 1
+        DONE     = 2
+        CANCELED = 3
 
 
     class Meta:
