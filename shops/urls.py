@@ -1,6 +1,6 @@
 from django.urls import path, include
 
-from shops.views import CartView, AllOrderView, OrderView
+from shops.views import CartView, AllOrderView, OrderView, SubscribeView
 
 urlpatterns = [
     path('/carts', include([
@@ -12,4 +12,7 @@ urlpatterns = [
         path('/all', AllOrderView.as_view()),
         path('/<int:order_id>', OrderView.as_view())
     ])),
+    path('/subscribes', include([
+        path('', SubscribeView.as_view())
+    ]))
 ]

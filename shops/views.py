@@ -7,7 +7,7 @@ from django.db.models       import Prefetch, F, Sum, Count, Q
 from django.core.exceptions import ValidationError
 from django.db              import IntegrityError, transaction, DatabaseError
 
-from shops.models           import Cart, Order, OrderItem, OrderStatus, OrderItemStatus
+from shops.models           import Cart, Order, OrderItem, OrderStatus, OrderItemStatus, Subscribe
 from products.models        import Image, Product
 from core.utils             import authorization
 from shops.validators       import ShopValidator
@@ -312,3 +312,31 @@ class OrderView(View):
 
         except Order.DoesNotExist:
             return JsonResponse({'MESSAGE': 'INVALID_ORDER'}, status=400)
+
+
+class SubscribeView(View):
+    @authorization
+    def get(self, request, **kwargs):
+        user = request.user
+
+        subscribes = Subscribe.objects.select_related('address', 'product').prefetch_related(
+            Prefetch('product__image_set', queryset=Image.objects.filter(name='thumb'), to_attr='thumb')
+        ).filter(user=user)
+
+        results = {
+            'name': user.name,
+            'address': subscribes[0].address.location,
+            'next_purchase_date': datetime.datetime.date(subscribes[0].next_purchase_date),
+            'next_ship_date': datetime.datetime.date(subscribes[0].next_purchase_date) +\
+                datetime.timedelta(days=7*subscribes[0].interval),
+            'interval': subscribes[0].interval,
+            'products_list': [
+                {
+                    'product_id': subscribe.product.id,
+                    'thumb': subscribe.product.thumb[0].url
+                }
+                for subscribe in subscribes
+            ],
+        }
+
+        return JsonResponse({'MESSAGE': 'SUCCESS', 'RESULT': results}, status=200)
