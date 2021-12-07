@@ -317,7 +317,7 @@ class OrderView(View):
 class SubscribeView(View):
     @authorization
     def get(self, request, **kwargs):
-        user = request.user
+        user       = request.user
 
         subscribes = Subscribe.objects.select_related('address', 'product').prefetch_related(
             Prefetch('product__image_set', queryset=Image.objects.filter(name='thumb'), to_attr='thumb')
