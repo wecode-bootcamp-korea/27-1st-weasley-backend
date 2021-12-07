@@ -319,7 +319,7 @@ class SubscribeView(View):
     def get(self, request, **kwargs):
         user       = request.user
 
-        subscribes = Subscribe.objects.select_related('address', 'product').prefetch_related(
+        subscribes = Subscribe.objects.select_related('address', 'product', 'product__category').prefetch_related(
             Prefetch('product__image_set', queryset=Image.objects.filter(name='thumb'), to_attr='thumb')
         ).filter(user=user)
 
@@ -333,8 +333,9 @@ class SubscribeView(View):
             'interval'           : subscribe.interval,
             'products_list'      : [
                 {
-                    'product_id' : subscribe.product.id,
-                    'thumb'      : subscribe.product.thumb[0].url
+                    'category_name' : subscribe.product.category.name,
+                    'product_id'    : subscribe.product.id,
+                    'thumb'         : subscribe.product.thumb[0].url
                 }
                 for subscribe in subscribes
             ],
