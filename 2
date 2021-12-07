@@ -57,8 +57,8 @@ class CartView(View):
     @authorization
     def delete(self, request, **kwargs):
         try:
-            cart_ids  = json.loads(request.GET.get('id', '[]'))
-
+            cart_ids  = request.GET.get('id', [])
+            print(list(cart_ids))
             if type(cart_ids) is not list or len(cart_ids)==0:
                 return JsonResponse({'MESSAGE': 'INVALID_ID'}, status=400)
 
@@ -67,7 +67,7 @@ class CartView(View):
             q    = Q()
 
             for cart_id in cart_ids:
-                q.add(Q(id=cart_id), q.OR)
+                q.add(Q(id=cart_ids), q.OR)
 
             cart_items = Cart.objects.filter(q, user=user)
 
