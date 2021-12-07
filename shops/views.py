@@ -3,7 +3,7 @@ import json, datetime, uuid
 import bcrypt
 from django.views           import View
 from django.http            import JsonResponse
-from django.db.models       import Prefetch, F, Sum, Count
+from django.db.models       import Prefetch, F, Sum, Count, Q
 from django.core.exceptions import ValidationError
 from django.db              import IntegrityError, transaction, DatabaseError
 
@@ -57,21 +57,23 @@ class CartView(View):
     @authorization
     def delete(self, request, **kwargs):
         try:
-            cart_id   = kwargs.get('cart_id', None)
-            user      = request.user
+            cart_ids  = request.GET.get('id', [])
 
-            cart_item = Cart.objects.filter(user=user) if not cart_id\
-                else Cart.objects.get(id=cart_id, user=user)
+            if type(cart_ids) is not list or len(cart_ids)==0:
+                return JsonResponse({'MESSAGE': 'INVALID_ID'}, status=400)
 
-            cart_item.delete()
+            user = request.user
+
+            q    = Q()
+
+            for cart_id in cart_ids:
+                q.add(Q(id=cart_ids), q.OR)
+
+            cart_items = Cart.objects.filter(user=user, q)
+
+            cart_items.delete()
 
             return JsonResponse({'MESSAGE': 'DELETED'}, status=200)
-
-        except KeyError:
-            return JsonResponse({'MESSAGE': 'PARAM_REQUIRED'}, status=400)
-
-        except Cart.DoesNotExist:
-            return JsonResponse({'MESSAGE': 'INVALID_CART'}, status=400)
 
         except ValueError:
             return JsonResponse({'MESSAGE': 'INVALID_CART'}, status=400)
