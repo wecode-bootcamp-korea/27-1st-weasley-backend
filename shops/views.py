@@ -324,16 +324,15 @@ class SubscribeView(View):
         ).filter(user=user)
 
         results = {
-            'name': user.name,
-            'address': subscribes[0].address.location,
-            'next_purchase_date': datetime.datetime.date(subscribes[0].next_purchase_date),
-            'next_ship_date': datetime.datetime.date(subscribes[0].next_purchase_date) +\
-                datetime.timedelta(days=7*subscribes[0].interval),
-            'interval': subscribes[0].interval,
-            'products_list': [
+            'name'               : user.name,
+            'address'            : subscribes[0].address.location,
+            'next_purchase_date' : subscribes[0].next_purchase_date,
+            'next_ship_date'     : subscribes[0].next_purchase_date + datetime.timedelta(days=7*subscribes[0].interval),
+            'interval'           : subscribes[0].interval,
+            'products_list'      : [
                 {
-                    'product_id': subscribe.product.id,
-                    'thumb': subscribe.product.thumb[0].url
+                    'product_id' : subscribe.product.id,
+                    'thumb'      : subscribe.product.thumb[0].url
                 }
                 for subscribe in subscribes
             ],
