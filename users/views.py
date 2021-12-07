@@ -130,6 +130,33 @@ class SigninView(View):
 
 class AddressView(View):
     @authorization
+    def post(self, request, **kwargs):
+        try:
+            data = json.loads(request.body)
+
+            user     = request.user
+
+            location = data['location']
+
+            UserValidator().validate_location(location)
+
+            address, is_created = Address.objects.get_or_create(user=user, location=location)
+
+            if is_created:
+                return JsonResponse({'MESSAGE': 'CREATED'}, status=201)
+
+            return JsonResponse({'MESSAGE': 'ADDRESS_ALREADY_EXIST'}, status=400)
+
+        except KeyError:
+            return JsonResponse({'MESSAGE': 'KEY_ERROR'}, status=400)
+
+        except ValidationError as e:
+            return JsonResponse({'MESSAGE': e.message}, status=400)
+
+        except json.decoder.JSONDecodeError:
+            return JsonResponse({'MESSAGE': 'BODY_REQUIRED'}, status=400)
+
+    @authorization
     def get(self, request, **kwargs):
         user      = request.user
 
