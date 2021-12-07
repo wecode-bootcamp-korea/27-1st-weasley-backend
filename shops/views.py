@@ -57,10 +57,10 @@ class CartView(View):
     @authorization
     def delete(self, request, **kwargs):
         try:
-            cart_id   = kwargs['cart_id']
+            cart_id   = kwargs.get('cart_id', None)
             user      = request.user
 
-            cart_item = Cart.objects.filter(user=user) if int(cart_id)==0\
+            cart_item = Cart.objects.filter(user=user) if not cart_id\
                 else Cart.objects.get(id=cart_id, user=user)
 
             cart_item.delete()
