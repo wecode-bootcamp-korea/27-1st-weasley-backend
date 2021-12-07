@@ -60,7 +60,7 @@ class CartView(View):
             cart_ids  = json.loads(request.GET.get('id', '[]'))
 
             if type(cart_ids) is not list or len(cart_ids)==0:
-                return JsonResponse({'MESSAGE': 'INVALID_ID'}, status=400)
+                return JsonResponse({'MESSAGE': 'INVALID_CART'}, status=400)
 
             user = request.user
 
