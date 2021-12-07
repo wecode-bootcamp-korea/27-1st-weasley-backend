@@ -69,7 +69,7 @@ class CartView(View):
             for cart_id in cart_ids:
                 q.add(Q(id=cart_ids), q.OR)
 
-            cart_items = Cart.objects.filter(user=user, q)
+            cart_items = Cart.objects.filter(q, user=user)
 
             cart_items.delete()
 
