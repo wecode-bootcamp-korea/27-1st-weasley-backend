@@ -15,7 +15,7 @@ class ProductValidator:
 
         if len(content) > self.CONTENT_MAX_LENGTH:
             raise ValidationError('CONTENT_TOO_LONG')
-
+            
     def validate_star(self, star):
         if int(star) < self.STAR_MIN_LENGTH:
             raise ValidationError('STAR_TOO_SMALL')
