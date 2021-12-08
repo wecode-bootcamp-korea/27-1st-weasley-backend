@@ -6,12 +6,13 @@ from django.http            import JsonResponse
 from django.db.models       import Prefetch, F, Sum, Count, Q
 from django.core.exceptions import ValidationError
 from django.db              import IntegrityError, transaction, DatabaseError
+from django.utils           import timezone
 
-from shops.models           import Cart, Order, OrderItem, OrderStatus, OrderItemStatus
+from shops.models           import Cart, Order, OrderItem, OrderStatus, OrderItemStatus, Subscribe
 from products.models        import Image, Product
+from users.models           import Address
 from core.utils             import authorization
 from shops.validators       import ShopValidator
-from users.models           import Address
 
 
 class CartView(View):
@@ -312,3 +313,62 @@ class OrderView(View):
 
         except Order.DoesNotExist:
             return JsonResponse({'MESSAGE': 'INVALID_ORDER'}, status=400)
+
+
+class SubscribeView(View):
+    @authorization
+    def post(self, request):
+        try:
+            data                   = json.loads(request.body)
+            user                   = request.user
+            subscribes             = Subscribe.objects.filter(user=user)
+
+            if not subscribes.exists():
+                interval           = 8
+                next_purchase_date = timezone.now().date() + datetime.timedelta(days=1)
+
+            else:
+                interval           = subscribes[0].interval
+                next_purchase_date = subscribes[0].next_purchase_date
+        
+            product_id             = data['product_id']
+            amount                 = data['amount']
+            address_id             = data['address_id']
+
+            shop_validator         = ShopValidator()
+            shop_validator.validate_amount(amount)
+
+            if not Address.objects.filter(user=user, id=address_id).exists():
+                return JsonResponse({'MESSAGE': 'INVALID_ADDRESS'}, status=400)
+
+            if not Product.objects.filter(id=product_id).exists():
+                return JsonResponse({'MESSAGE': 'INVALID_PRODUCT'}, status=400)
+    
+            if Subscribe.objects.filter(user=user, product_id=product_id).exists():
+                return JsonResponse({'MESSAGE': 'SUBSCRIBE_ALREADY_EXIST'}, status=400)
+
+            Subscribe.objects.create(
+                user                 = user,
+                address_id           = address_id,
+                product_id           = product_id,
+                amount               = amount,
+                interval             = interval,
+                next_purchase_date   = next_purchase_date
+            )
+
+            return JsonResponse({'MESSAGE': 'CREATED'}, status=201)
+
+        except json.decoder.JSONDecodeError:
+            return JsonResponse({'MESSAGE': 'BODY_REQUIRED'}, status=400)
+
+        except KeyError:
+            return JsonResponse({'MESSAGE': 'KEY_ERROR'}, status=400)
+
+        except ValidationError as e:
+            return JsonResponse({'MESSAGE': e.message}, status=400)
+
+        except IndexError:
+            return JsonResponse({'MESSAGE': 'ADDRESS_NOT_FOUND'}, status=400)
+
+        except AttributeError:
+            return JsonResponse({'MESSAGE': 'INVALID_ADDRESS'}, status=400)
