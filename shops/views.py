@@ -323,14 +323,12 @@ class SubscribeView(View):
             Prefetch('product__image_set', queryset=Image.objects.filter(name='thumb'), to_attr='thumb')
         ).filter(user=user)
 
-        subscribe  = subscribes[0]
-
         results = {
             'name'               : user.name,
-            'address'            : subscribe.address.location,
-            'next_purchase_date' : subscribe.next_purchase_date,
-            'next_ship_date'     : subscribe.next_purchase_date + datetime.timedelta(days=7*subscribe.interval),
-            'interval'           : subscribe.interval,
+            'address'            : subscribes[0].address.location,
+            'next_purchase_date' : subscribes[0].next_purchase_date,
+            'next_ship_date'     : subscribes[0].next_purchase_date + datetime.timedelta(days=7*subscribe.interval),
+            'interval'           : subscribes[0].interval,
             'products_list'      : [
                 {
                     'category_name' : subscribe.product.category.name,
