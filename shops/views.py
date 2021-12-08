@@ -317,23 +317,25 @@ class OrderView(View):
 class SubscribeView(View):
     @authorization
     def get(self, request, **kwargs):
-        user = request.user
+        user       = request.user
 
-        subscribes = Subscribe.objects.select_related('address', 'product').prefetch_related(
+        subscribes = Subscribe.objects.select_related('address', 'product', 'product__category').prefetch_related(
             Prefetch('product__image_set', queryset=Image.objects.filter(name='thumb'), to_attr='thumb')
         ).filter(user=user)
 
+        subscribe  = subscribes[0]
+
         results = {
-            'name': user.name,
-            'address': subscribes[0].address.location,
-            'next_purchase_date': datetime.datetime.date(subscribes[0].next_purchase_date),
-            'next_ship_date': datetime.datetime.date(subscribes[0].next_purchase_date) +\
-                datetime.timedelta(days=7*subscribes[0].interval),
-            'interval': subscribes[0].interval,
-            'products_list': [
+            'name'               : user.name,
+            'address'            : subscribe.address.location,
+            'next_purchase_date' : subscribe.next_purchase_date,
+            'next_ship_date'     : subscribe.next_purchase_date + datetime.timedelta(days=7*subscribe.interval),
+            'interval'           : subscribe.interval,
+            'products_list'      : [
                 {
-                    'product_id': subscribe.product.id,
-                    'thumb': subscribe.product.thumb[0].url
+                    'category_name' : subscribe.product.category.name,
+                    'product_id'    : subscribe.product.id,
+                    'thumb'         : subscribe.product.thumb[0].url
                 }
                 for subscribe in subscribes
             ],
