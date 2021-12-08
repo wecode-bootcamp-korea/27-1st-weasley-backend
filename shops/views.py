@@ -395,3 +395,31 @@ class SubscribeView(View):
        ]
 
         return JsonResponse({'MESSAGE': 'SUCCESS', 'RESULT': results}, status=200)
+
+    @authorization
+    def patch(self, request):
+        try:
+            data                              = json.loads(request.body)
+            user                              = request.user
+
+            interval                          = data['interval']
+            subscribes                        = Subscribe.objects.filter(user=user)
+
+            if not subscribes.exists():
+                return JsonResponse({'MESSAGE': 'INVALID_SUBSCRIBE'}, status=400)
+
+            if interval not in [4, 12, 16]:
+                return JsonResponse({'MESSAGE': 'INVALID_INTERVAL'}, status=400)
+
+            subscribes.update(interval=interval)
+
+            return JsonResponse({'MESSAGE': 'SUCCESS'}, status=200)
+
+        except json.decoder.JSONDecodeError:
+            return JsonResponse({'MESSAGE': 'BODY_REQUIRED'}, status=400)
+
+        except KeyError:
+            return JsonResponse({'MESSAGE': 'KEY_ERROR'}, status=400)
+
+        except ValidationError as e:
+            return JsonResponse({'MESSAGE': e.message}, status=400)
