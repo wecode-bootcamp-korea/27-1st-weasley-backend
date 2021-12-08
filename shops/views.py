@@ -319,24 +319,22 @@ class SubscribeView(View):
     def get(self, request, **kwargs):
         user       = request.user
 
-        subscribes = Subscribe.objects.select_related('address', 'product', 'product__category').prefetch_related(
+        subscribes = list(Subscribe.objects.select_related('address', 'product', 'product__category').prefetch_related(
             Prefetch('product__image_set', queryset=Image.objects.filter(name='thumb'), to_attr='thumb')
-        ).filter(user=user)
+        ).filter(user=user))
 
-        results = {
-            'name'               : user.name,
-            'address'            : subscribes[0].address.location,
-            'next_purchase_date' : subscribes[0].next_purchase_date,
-            'next_ship_date'     : subscribes[0].next_purchase_date + datetime.timedelta(days=7*subscribe.interval),
-            'interval'           : subscribes[0].interval,
-            'products_list'      : [
-                {
-                    'category_name' : subscribe.product.category.name,
-                    'product_id'    : subscribe.product.id,
-                    'thumb'         : subscribe.product.thumb[0].url
-                }
-                for subscribe in subscribes
-            ],
-        }
+        results = [
+            {
+                'user_name'          : user.name,
+                'address'            : subscribe.address.location,
+                'next_purchase_date' : subscribe.next_purchase_date,
+                'next_ship_date'     : subscribe.next_purchase_date + datetime.timedelta(days=7*subscribe.interval),
+                'interval'           : subscribe.interval,
+                'category_name'      : subscribe.product.category.name,
+                'product_id'         : subscribe.product.id,
+                'thumb'              : subscribe.product.thumb[0].url
+            }
+            for subscribe in subscribes
+       ]
 
         return JsonResponse({'MESSAGE': 'SUCCESS', 'RESULT': results}, status=200)
