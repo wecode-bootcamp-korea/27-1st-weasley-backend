@@ -390,7 +390,8 @@ class SubscribeView(View):
                 'interval'           : subscribe.interval,
                 'category_name'      : subscribe.product.category.name,
                 'product_id'         : subscribe.product.id,
-                'thumb'              : subscribe.product.thumb[0].url
+                'thumb'              : subscribe.product.thumb[0].url,
+                'subscribe_id'       : subscribe.id
             }
             for subscribe in subscribes
         ]
