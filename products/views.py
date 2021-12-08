@@ -1,9 +1,10 @@
 import json
 
-from django.core.exceptions import ValidationError
-from django.http            import JsonResponse
-from django.views           import View
-from django.db.models       import Avg, F
+from django.core.exceptions     import ValidationError
+from django.http                import JsonResponse
+from django.views               import View
+from django.db.models           import Avg, F
+from django.db.models.functions import TruncDate
 
 from products.models        import Category, Product, Review, Price
 from products.validators    import ProductValidator
@@ -26,31 +27,19 @@ class CategoriesView(View):
             } for product in category.product_set.all()]
         } for category in Category.objects.all()[offset:offset+limit]]
 
-        return JsonResponse({'MESSAGE': 'SUCCESS', 'RESULT': categories}, status=200) 
+        return JsonResponse({'MESSAGE': 'SUCCESS', 'RESULT': categories}, status=200)
 
 class ProductView(View):
       def get(self, request, **kwargs):
 
         product = Product.objects.get(id=kwargs['product_id'])
-        category_id = product.category.id
         price = product.price_set.get()
-        review = [
-            *product.category.product_set.filter(review__isnull=False).annotate(
-                content=F('review__content'),
-                star=F('review__star'),
-                date=F('review__created_at'),
-                user_name=F('review__user__name')
-            ).values(
-                'id', 'content', 'star', 'date', 'user_name'
-            )
-        ]
+        review = list(Review.objects.filter(product__category_id=product.category.id).annotate(date = TruncDate(F('created_at'))).values('content','date','star','user__name'))
 
         results = {
             'product_id': product.id,
             'ml_volume': product.category.ml_volume,
-            'images': [{
-                image.name: image.url
-            } for image in product.image_set.all()],
+            'images': [{image.name: image.url} for image in product.image_set.all()],
             'name': product.name,
             'category_price': product.category.price,
             'tags': [tag.name for tag in product.tags.all()],
@@ -74,7 +63,7 @@ class ProductView(View):
         }
 
         return JsonResponse({'RESULT' : results, 'MESSAGE' : 'SUCCESS'}, status=200)
-      
+
 
 class ReviewView(View):
     @authorization
