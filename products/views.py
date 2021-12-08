@@ -1,10 +1,12 @@
 import json
 
-from django.core.exceptions import ValidationError
-from django.http            import JsonResponse
-from django.views           import View
+from django.core.exceptions     import ValidationError
+from django.http                import JsonResponse
+from django.views               import View
+from django.db.models           import Avg, F
+from django.db.models.functions import TruncDate
 
-from products.models        import Category, Review, Product
+from products.models        import Category, Product, Review, Price
 from products.validators    import ProductValidator
 from core.utils             import authorization
 
@@ -25,7 +27,42 @@ class CategoriesView(View):
             } for product in category.product_set.all()]
         } for category in Category.objects.all()[offset:offset+limit]]
 
-        return JsonResponse({'MESSAGE': 'SUCCESS', 'RESULT': categories}, status=200) 
+        return JsonResponse({'MESSAGE': 'SUCCESS', 'RESULT': categories}, status=200)
+
+class ProductView(View):
+      def get(self, request, **kwargs):
+
+        product = Product.objects.get(id=kwargs['product_id'])
+        price = product.price_set.get()
+        review = list(Review.objects.filter(product__category_id=product.category.id).annotate(date = TruncDate(F('created_at'))).values('content','date','star','user__name'))
+
+        results = {
+            'product_id': product.id,
+            'ml_volume': product.category.ml_volume,
+            'images': [{image.name: image.url} for image in product.image_set.all()],
+            'name': product.name,
+            'category_price': product.category.price,
+            'tags': [tag.name for tag in product.tags.all()],
+            'average_star': float('%.1f' %(sum(map(lambda x: x['star'], review)) / len(review))) if len(review) != 0 else 0,
+            'review': review,
+            'price': {
+                'manufacturing_cost': price.manufacturing_cost,
+                'transportation_cost': price.transportation_cost,
+                'development_cost': price.development_cost,
+                'commision_cost': price.commision_cost,
+                'other_market_price': price.other_market_price,
+            },
+            'product_set': [
+                {
+                    'id': product.id,
+                    'tags': [tag.name for tag in product.tags.all()]
+                }
+                for product in product.category.product_set.all()
+            ]
+
+        }
+
+        return JsonResponse({'RESULT' : results, 'MESSAGE' : 'SUCCESS'}, status=200)
 
 
 class ReviewView(View):
@@ -61,5 +98,3 @@ class ReviewView(View):
 
         except json.decoder.JSONDecodeError:
             return JsonResponse({'MESSAGE' : 'BODY_REQUIRED'}, status=400)
-
-
