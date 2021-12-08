@@ -12,10 +12,13 @@ from shops.models     import Subscribe, Order, OrderStatus, OrderItem, OrderItem
 
 def subcribe_check():
     now = timezone.now().date()
-    print(now)
     Subscribe.objects.filter(next_purchase_date__lt=now).delete()
-    subscribes = Subscribe.objects.filter(next_purchase_date=now)
-    print(subscribes)
+    subscribes = list(Subscribe.objects.select_related('product').filter(next_purchase_date=now))
+
+    for subscribe in subscribes:
+        print(subscribe)
+
+
 
 schedule.every(10).seconds.do(subcribe_check)
 
