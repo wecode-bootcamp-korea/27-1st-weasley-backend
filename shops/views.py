@@ -393,6 +393,32 @@ class SubscribeView(View):
                 'thumb'              : subscribe.product.thumb[0].url
             }
             for subscribe in subscribes
-       ]
+        ]
 
         return JsonResponse({'MESSAGE': 'SUCCESS', 'RESULT': results}, status=200)
+
+    @authorization
+    def delete(self, request, **kwargs):
+        try:
+            user = request.user
+
+            subscribe_ids = json.loads(request.GET.get('id', '[]'))
+
+            subscribe_list = Subscribe.objects.filter(user=user, id__in=subscribe_ids)
+
+            if not subscribe_list.exists():
+                return JsonResponse({'MESSAGE': 'INVALID_SUBSCRIPTION'}, status=400)
+
+            subscribe_list.delete()
+
+
+            return JsonResponse({"MESSAGE": "DELETED"}, status=200)
+
+        except ValueError:
+            return JsonResponse({"MESSAGE": "INVALID_SUBSCRIPTION"},status=400)
+
+        except KeyError:
+            return JsonResponse({"MESSAGE": "KEY_ERROR"}, status=400)
+
+        except TypeError:
+            return JsonResponse({"MESSAGE": "TYPE_ERROR"}, status=400)
