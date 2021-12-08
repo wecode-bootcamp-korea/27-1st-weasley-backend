@@ -330,7 +330,7 @@ class SubscribeView(View):
             else:
                 interval           = subscribes[0].interval
                 next_purchase_date = subscribes[0].next_purchase_date
-        
+
             product_id             = data['product_id']
             amount                 = data['amount']
             address_id             = data['address_id']
@@ -343,7 +343,7 @@ class SubscribeView(View):
 
             if not Product.objects.filter(id=product_id).exists():
                 return JsonResponse({'MESSAGE': 'INVALID_PRODUCT'}, status=400)
-    
+
             if Subscribe.objects.filter(user=user, product_id=product_id).exists():
                 return JsonResponse({'MESSAGE': 'SUBSCRIBE_ALREADY_EXIST'}, status=400)
 
@@ -373,6 +373,7 @@ class SubscribeView(View):
         except AttributeError:
             return JsonResponse({'MESSAGE': 'INVALID_ADDRESS'}, status=400)
 
+    @authorization
     def get(self, request, **kwargs):
         user       = request.user
 
