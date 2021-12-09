@@ -1,0 +1,12 @@
+FROM python:3.9
+
+MAINTAINER eslerkang <eslerkang@gmail.com>
+
+WORKDIR /usr/src/app
+
+COPY requirements/requirements.txt ./
+RUN pip install -r requirements.txt
+
+COPY . .
+
+CMD ["python", "scheduler.py"]
