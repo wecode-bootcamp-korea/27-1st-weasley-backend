@@ -331,4 +331,3 @@ zsdoc/data
 my_settings.py
 csv_input.py
 csv/
-Dockerfile
