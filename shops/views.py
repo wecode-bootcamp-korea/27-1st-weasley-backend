@@ -399,6 +399,35 @@ class SubscribeView(View):
         return JsonResponse({'MESSAGE': 'SUCCESS', 'RESULT': results}, status=200)
 
     @authorization
+    def patch(self, request):
+        try:
+            data                              = json.loads(request.body)
+            user                              = request.user
+            changeable_interval               = [4, 12, 16]
+            interval                          = data['interval']
+            subscribes                        = Subscribe.objects.filter(user=user)
+
+            if not subscribes.exists():
+                return JsonResponse({'MESSAGE': 'INVALID_SUBSCRIBE'}, status=400)
+
+            if interval not in changeable_interval:
+                return JsonResponse({'MESSAGE': 'INVALID_INTERVAL'}, status=400)
+
+            subscribes.update(interval=interval)
+            next_ship_date = subscribes[0].next_purchase_date + datetime.timedelta(weeks=interval)
+
+            return JsonResponse({'MESSAGE': 'SUCCESS', 'RESULT': next_ship_date}, status=200)
+
+        except json.decoder.JSONDecodeError:
+            return JsonResponse({'MESSAGE': 'BODY_REQUIRED'}, status=400)
+
+        except KeyError:
+            return JsonResponse({'MESSAGE': 'KEY_ERROR'}, status=400)
+
+        except ValidationError as e:
+            return JsonResponse({'MESSAGE': e.message}, status=400)
+
+    @authorization
     def delete(self, request, **kwargs):
         try:
             user = request.user
