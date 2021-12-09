@@ -373,6 +373,7 @@ class SubscribeView(View):
         except AttributeError:
             return JsonResponse({'MESSAGE': 'INVALID_ADDRESS'}, status=400)
 
+    @authorization
     def get(self, request, **kwargs):
         user       = request.user
 
