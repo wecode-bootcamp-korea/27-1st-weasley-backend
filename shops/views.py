@@ -330,7 +330,7 @@ class SubscribeView(View):
             else:
                 interval           = subscribes[0].interval
                 next_purchase_date = subscribes[0].next_purchase_date
-        
+
             product_id             = data['product_id']
             amount                 = data['amount']
             address_id             = data['address_id']
@@ -343,7 +343,7 @@ class SubscribeView(View):
 
             if not Product.objects.filter(id=product_id).exists():
                 return JsonResponse({'MESSAGE': 'INVALID_PRODUCT'}, status=400)
-    
+
             if Subscribe.objects.filter(user=user, product_id=product_id).exists():
                 return JsonResponse({'MESSAGE': 'SUBSCRIBE_ALREADY_EXIST'}, status=400)
 
@@ -390,10 +390,11 @@ class SubscribeView(View):
                 'interval'           : subscribe.interval,
                 'category_name'      : subscribe.product.category.name,
                 'product_id'         : subscribe.product.id,
-                'thumb'              : subscribe.product.thumb[0].url
+                'thumb'              : subscribe.product.thumb[0].url,
+                'subscribe_id'       : subscribe.id
             }
             for subscribe in subscribes
-       ]
+        ]
 
         return JsonResponse({'MESSAGE': 'SUCCESS', 'RESULT': results}, status=200)
 
@@ -424,3 +425,28 @@ class SubscribeView(View):
 
         except ValidationError as e:
             return JsonResponse({'MESSAGE': e.message}, status=400)
+
+    def delete(self, request, **kwargs):
+        try:
+            user = request.user
+
+            subscribe_ids = json.loads(request.GET.get('id', '[]'))
+
+            subscribe_list = Subscribe.objects.filter(user=user, id__in=subscribe_ids)
+
+            if not subscribe_list.exists():
+                return JsonResponse({'MESSAGE': 'INVALID_SUBSCRIPTION'}, status=400)
+
+            subscribe_list.delete()
+
+
+            return JsonResponse({"MESSAGE": "DELETED"}, status=200)
+
+        except ValueError:
+            return JsonResponse({"MESSAGE": "INVALID_SUBSCRIPTION"},status=400)
+
+        except KeyError:
+            return JsonResponse({"MESSAGE": "KEY_ERROR"}, status=400)
+
+        except TypeError:
+            return JsonResponse({"MESSAGE": "TYPE_ERROR"}, status=400)
