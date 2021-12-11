@@ -28,7 +28,7 @@ def subcribe_check():
             if subscribe_user['total_price'] <= user.point:
                 order = Order(
                     user            = user,
-                    address         = subscribes[0].address.location,
+                    address         = subscribes[0].address,
                     order_number    = uuid.uuid4(),
                     order_status_id = OrderStatus.Status.UNDONE
                 )
